@@ -13,7 +13,7 @@ public class CsvOutputFormatter : TextOutputFormatter
 		SupportedEncodings.Add(Encoding.UTF8);
 		SupportedEncodings.Add(Encoding.Unicode);
 	}
-	  
+
 	protected override bool CanWriteType(Type? type)
 	{
 		if (typeof(CompanyDto).IsAssignableFrom(type)
