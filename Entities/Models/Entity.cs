@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using Entities.LinkModels;
+using System.Collections;
 using System.Dynamic;
 using System.Xml;
 using System.Xml.Schema;
@@ -18,7 +19,7 @@ public class Entity : DynamicObject, IXmlSerializable, IDictionary<string, objec
 
 	public override bool TryGetMember(GetMemberBinder binder, out object result)
 	{
-		if (_expando.TryGetValue(binder.Name, out object value))
+		if (_expando.TryGetValue(binder.Name, out object? value))
 		{
 			result = value;
 			return true;
@@ -27,7 +28,7 @@ public class Entity : DynamicObject, IXmlSerializable, IDictionary<string, objec
 		return base.TryGetMember(binder, out result);
 	}
 
-	public override bool TrySetMember(SetMemberBinder binder, object value)
+	public override bool TrySetMember(SetMemberBinder binder, object? value)
 	{
 		_expando[binder.Name] = value;
 
@@ -69,7 +70,23 @@ public class Entity : DynamicObject, IXmlSerializable, IDictionary<string, objec
 	private void WriteLinksToXml(string key, object value, XmlWriter writer)
 	{
 		writer.WriteStartElement(key);
-		writer.WriteString(value.ToString());
+
+		if (value.GetType() == typeof(List<Link>))
+		{
+			foreach (var val in value as List<Link>)
+			{
+				writer.WriteStartElement(nameof(Link));
+				WriteLinksToXml(nameof(val.Href), val.Href, writer);
+				WriteLinksToXml(nameof(val.Method), val.Method, writer);
+				WriteLinksToXml(nameof(val.Rel), val.Rel, writer);
+				writer.WriteEndElement();
+			}
+		}
+		else
+		{
+			writer.WriteString(value.ToString());
+		}
+
 		writer.WriteEndElement();
 	}
 
