@@ -38,12 +38,20 @@ builder.Services.AddControllers(config =>
 	config.RespectBrowserAcceptHeader = true;
 	config.ReturnHttpNotAcceptable = true;
 	config.InputFormatters.Insert(0, GetJsonPatchInputFormatter());
-}).AddXmlDataContractSerializerFormatters()
-  .AddCustomCSVFormatter()
-  .AddApplicationPart(typeof(CompanyEmployees.Presentation.AssemblyReference).Assembly);
+    config.CacheProfiles.Add("120SecondsDuration", new CacheProfile
+    {
+        Duration =120
+    });
+})
+.AddXmlDataContractSerializerFormatters()
+.AddCustomCSVFormatter()
+.AddApplicationPart(typeof(CompanyEmployees.Presentation.AssemblyReference).Assembly);
+
 
 builder.Services.AddCustomMediaTypes();
 builder.Services.ConfigureVersioning();
+builder.Services.ConfigureResponseCaching();
+builder.Services.ConfigureHttpCacheHeaders();
 var app = builder.Build();
 
 var logger = app.Services.GetRequiredService<ILoggerManager>();
@@ -60,6 +68,10 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 });
 
 app.UseCors("CorsPolicy");
+
+app.UseResponseCaching();
+
+app.UseHttpCacheHeaders();
 
 app.UseAuthorization();
 
