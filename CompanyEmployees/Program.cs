@@ -1,3 +1,4 @@
+using AspNetCoreRateLimit;
 using CompanyEmployees.Extensions;
 using CompanyEmployees.Presentation.ActionFilters;
 using CompanyEmployees.Utility;
@@ -43,6 +44,7 @@ builder.Services.AddControllers(config =>
         Duration =120
     });
 })
+
 .AddXmlDataContractSerializerFormatters()
 .AddCustomCSVFormatter()
 .AddApplicationPart(typeof(CompanyEmployees.Presentation.AssemblyReference).Assembly);
@@ -52,6 +54,10 @@ builder.Services.AddCustomMediaTypes();
 builder.Services.ConfigureVersioning();
 builder.Services.ConfigureResponseCaching();
 builder.Services.ConfigureHttpCacheHeaders();
+builder.Services.AddMemoryCache();
+builder.Services.ConfigureRateLimitingOptions();
+builder.Services.AddHttpContextAccessor();
+
 var app = builder.Build();
 
 var logger = app.Services.GetRequiredService<ILoggerManager>();
@@ -72,6 +78,8 @@ app.UseCors("CorsPolicy");
 app.UseResponseCaching();
 
 app.UseHttpCacheHeaders();
+
+app.UseIpRateLimiting();
 
 app.UseAuthorization();
 

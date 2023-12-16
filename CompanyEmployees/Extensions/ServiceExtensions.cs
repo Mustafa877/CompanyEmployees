@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using AspNetCoreRateLimit;
 using CompanyEmployees.Presentation.Controllers;
 using Contracts;
 using LoggerService;
@@ -87,7 +88,7 @@ public static class ServiceExtensions
     }
 
     public static void ConfigureResponseCaching(this IServiceCollection services) => services.AddResponseCaching();
-    public static void ConfigureHttpCacheHeaders(this IServiceCollection services) =>services.AddHttpCacheHeaders((expirationOpt) =>
+    public static void ConfigureHttpCacheHeaders(this IServiceCollection services) => services.AddHttpCacheHeaders((expirationOpt) =>
     {
         expirationOpt.MaxAge = 65;
         expirationOpt.CacheLocation = CacheLocation.Private;
@@ -96,5 +97,27 @@ public static class ServiceExtensions
     {
         validationOpt.MustRevalidate = true;
     });
+
+    public static void ConfigureRateLimitingOptions(this IServiceCollection services)
+    {
+        var rateLimitRules = new List<RateLimitRule>
+    {
+        new RateLimitRule
+        {
+            Endpoint = "*",
+            Limit = 3,
+            Period = "1m"
+        }
+    };
+        services.Configure<IpRateLimitOptions>(opt =>
+        {
+            opt.GeneralRules = rateLimitRules;
+        });
+        services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+        services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+        services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+        services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+    }
+
 }
 
