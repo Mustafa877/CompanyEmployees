@@ -74,21 +74,6 @@ internal sealed class AuthenticationService : IAuthenticationService
 
         return new TokenDto(accessToken, refreshToken);
     }
-
-    public async Task<TokenDto> RefreshToken(TokenDto tokenDto)
-    {
-        var principal = GetPrincipalFromExpiredToken(tokenDto.AccessToken);
-
-        var user = await _userManager.FindByNameAsync(principal.Identity.Name);
-        if (user == null || user.RefreshToken != tokenDto.RefreshToken ||
-            user.RefreshTokenExpiryTime <= DateTime.Now)
-            throw new RefreshTokenBadRequest();
-
-        _user = user;
-
-        return await CreateToken(populateExp: false);
-    }
-
     private string GenerateRefreshToken()
     {
         var randomNumber = new byte[32];
@@ -167,5 +152,16 @@ internal sealed class AuthenticationService : IAuthenticationService
         );
 
         return tokenOptions;
+    }
+
+    public async Task<TokenDto> RefreshToken(TokenDto tokenDto)
+    {
+        var principal = GetPrincipalFromExpiredToken(tokenDto.AccessToken);
+        var user = await _userManager.FindByNameAsync(principal.Identity.Name);
+        if (user == null || user.RefreshToken != tokenDto.RefreshToken ||user.RefreshTokenExpiryTime <= DateTime.Now)
+        
+            throw new RefreshTokenBadRequest();
+        _user = user;
+        return await CreateToken(populateExp: false);
     }
 }
