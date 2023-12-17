@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Repository;
 using Service;
 using Service.Contracts;
@@ -147,6 +148,7 @@ public static class ServiceExtensions
     {
         var jwtConfiguration = new JwtConfiguration();
         configuration.Bind(jwtConfiguration.Section, jwtConfiguration);
+
         var secretKey = Environment.GetEnvironmentVariable("SECRET");
 
         services.AddAuthentication(opt =>
@@ -162,17 +164,71 @@ public static class ServiceExtensions
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
+
                 ValidIssuer = jwtConfiguration.ValidIssuer,
                 ValidAudience = jwtConfiguration.ValidAudience,
-                IssuerSigningKey = new   SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
-                //IssuerSigningKey = new   SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["secretKey"]))
- 
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
             };
         });
     }
 
-    public static void AddJwtConfiguration(this IServiceCollection services,IConfiguration configuration) =>
-    services.Configure<JwtConfiguration>(configuration.GetSection("JwtSettings"));
+    public static void AddJwtConfiguration(this IServiceCollection services, IConfiguration configuration) =>
+        services.Configure<JwtConfiguration>(configuration.GetSection("JwtSettings"));
 
+    public static void ConfigureSwagger(this IServiceCollection services)
+    {
+        services.AddSwaggerGen(s =>
+        {
+            s.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "Mustafa Haddad API",
+                Version = "v1",
+                Description = "CompanyEmployees API by Mustafa Haddad",
+                TermsOfService = new Uri("https://mustafadev.com/"),
+                Contact = new OpenApiContact
+                {
+                    Name = "Mustafa Haddad",
+                    Email = "MustafaHaddad866@outlook.com",
+                    Url = new Uri("https://mustafadev.com/"),
+                },
+                License = new OpenApiLicense
+                {
+                    Name = "CompanyEmployees API LICX",
+                    Url = new Uri("https://mustafadev.com/"),
+                }
+            });
 
+            s.SwaggerDoc("v2", new OpenApiInfo { Title = "Code Maze API", Version = "v2" });
+
+            var xmlFile = $"{typeof(Presentation.AssemblyReference).Assembly.GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            s.IncludeXmlComments(xmlPath);
+
+            s.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Place to add JWT with Bearer",
+                Name = "Authorization",
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+
+            s.AddSecurityRequirement(new OpenApiSecurityRequirement()
+            {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            },
+                            Name = "Bearer",
+                        },
+                        new List<string>()
+                    }
+            });
+
+        });
+    }
 }
