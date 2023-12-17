@@ -2,6 +2,7 @@
 
 public interface IServiceManager
 {
-	ICompanyService CompanyService { get; }
-	IEmployeeService EmployeeService { get; }
+    ICompanyService CompanyService { get; }
+    IEmployeeService EmployeeService { get; }
+    IAuthenticationService AuthenticationService { get; }
 }
